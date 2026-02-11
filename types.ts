@@ -6,7 +6,7 @@ export interface Contact {
 }
 
 export interface HistoryItem {
-  id: string;
+  id?: string;
   emotion: string;
   latitude: number;
   longitude: number;
@@ -16,12 +16,12 @@ export interface HistoryItem {
 }
 
 export interface User {
-  id: string;
+  id?: string;
   name?: string;
   displayName?: string;
-  email: string;
+  email?: string;
   phone?: string;
-  role: 'admin' | 'member' | 'police';
+  role?: 'admin' | 'member' | 'police';
   batteryLevel?: number;
   dangerZoneActive?: boolean;
   lastLatitude?: number;
@@ -31,12 +31,11 @@ export interface User {
   station?: string;
   contacts?: Record<string, Contact>;
   history?: Record<string, HistoryItem>;
-  // Added lastLogin property to match RAW_DATA
   lastLogin?: number;
 }
 
 export interface Alert {
-  id: string;
+  id?: string;
   confidence: number;
   emotion: string;
   latitude: number;
