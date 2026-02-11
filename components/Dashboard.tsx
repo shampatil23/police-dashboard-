@@ -48,17 +48,27 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
     return allAlerts;
   }, [data.alerts]);
 
-  // Get latest critical alert
+  // Get latest critical alert with improved logic
   const latestCriticalAlert = useMemo(() => {
     const criticalAlerts = processedAlerts
-      .filter(a => a.isEmergency || a.status === 'ACTIVE')
+      .filter(a => {
+        const isActive = a.status === 'ACTIVE' ||
+          a.isEmergency === true ||
+          (!a.status && !a.hasOwnProperty('isEmergency'));
+        return isActive && a.status !== 'RESOLVED';
+      })
       .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
     return criticalAlerts[0] || null;
   }, [processedAlerts]);
 
   const users = Object.values(data.users || {}) as User[];
-  const activeAlerts = processedAlerts.filter(a => a.isEmergency || a.status === 'ACTIVE');
+  const activeAlerts = processedAlerts.filter(a => {
+    const isActive = a.status === 'ACTIVE' ||
+      a.isEmergency === true ||
+      (!a.status && !a.hasOwnProperty('isEmergency'));
+    return isActive && a.status !== 'RESOLVED';
+  });
   const citizensMonitored = users.filter(u => u.role === 'member' || u.role === 'admin').length;
   const dangerZones = users.filter(u => u.dangerZoneActive).length;
   const totalIncidents = processedAlerts.length;
@@ -135,9 +145,31 @@ const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4 pt-2">
+                  {latestCriticalAlert.locationName && (
                     <div>
                       <p className="text-rose-100 text-xs font-bold uppercase tracking-wider mb-1">Location</p>
+                      <p className="text-sm font-medium">{latestCriticalAlert.locationName}</p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    {latestCriticalAlert.confidence && (
+                      <div>
+                        <p className="text-rose-100 text-xs font-bold uppercase tracking-wider mb-1">AI Confidence</p>
+                        <p className="text-sm font-medium">{latestCriticalAlert.confidence.toFixed(1)}%</p>
+                      </div>
+                    )}
+                    {latestCriticalAlert.threatLevel && (
+                      <div>
+                        <p className="text-rose-100 text-xs font-bold uppercase tracking-wider mb-1">Threat Level</p>
+                        <p className="text-sm font-medium">{latestCriticalAlert.threatLevel}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-2 border-t border-white/20">
+                    <div>
+                      <p className="text-rose-100 text-xs font-bold uppercase tracking-wider mb-1">GPS Coordinates</p>
                       <p className="text-sm font-medium">
                         {latestCriticalAlert.latitude?.toFixed(4)}, {latestCriticalAlert.longitude?.toFixed(4)}
                       </p>

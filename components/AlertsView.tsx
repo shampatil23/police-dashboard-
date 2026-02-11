@@ -47,7 +47,13 @@ const AlertsView: React.FC<AlertsViewProps> = ({ data }) => {
     return allAlerts.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   }, [data.alerts]);
 
-  const activeAlerts = processedAlerts.filter(a => a.isEmergency || a.status === 'ACTIVE');
+  // Filter active alerts with improved logic
+  const activeAlerts = processedAlerts.filter(a => {
+    const isActive = a.status === 'ACTIVE' ||
+      a.isEmergency === true ||
+      (!a.status && !a.hasOwnProperty('isEmergency'));
+    return isActive && a.status !== 'RESOLVED';
+  });
 
   const getThreatColor = (emotion: string) => {
     const emotionUpper = emotion?.toUpperCase() || '';
@@ -71,8 +77,8 @@ const AlertsView: React.FC<AlertsViewProps> = ({ data }) => {
           <p className="text-slate-500">Real-time threat monitoring and rapid response command</p>
         </div>
         <div className={`px-4 py-2 rounded-xl flex items-center gap-2 font-bold text-sm ${activeAlerts.length > 0
-            ? 'bg-rose-100 text-rose-700 animate-pulse'
-            : 'bg-emerald-100 text-emerald-700'
+          ? 'bg-rose-100 text-rose-700 animate-pulse'
+          : 'bg-emerald-100 text-emerald-700'
           }`}>
           <ShieldCheck className="w-4 h-4" />
           {activeAlerts.length > 0 ? `${activeAlerts.length} Active Emergency` : 'All Clear'}
@@ -91,8 +97,8 @@ const AlertsView: React.FC<AlertsViewProps> = ({ data }) => {
               <div
                 key={alert.id || `alert-${index}`}
                 className={`bg-white rounded-3xl overflow-hidden border-2 shadow-xl transition-all ${isActive
-                    ? `border-${threatColor}-500 shadow-${threatColor}-200/50`
-                    : 'border-slate-200 opacity-75'
+                  ? `border-${threatColor}-500 shadow-${threatColor}-200/50`
+                  : 'border-slate-200 opacity-75'
                   }`}
               >
                 <div className={`p-6 flex items-center justify-between text-white ${isActive ? `bg-${threatColor}-500` : 'bg-slate-400'
@@ -127,6 +133,37 @@ const AlertsView: React.FC<AlertsViewProps> = ({ data }) => {
                         <p className="text-sm font-bold text-slate-700">{alert.reason}</p>
                       </div>
                     )}
+
+                    {alert.locationName && (
+                      <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                        <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Location Name</p>
+                        <p className="text-sm font-bold text-indigo-700">{alert.locationName}</p>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {alert.confidence && (
+                        <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                          <p className="text-[10px] font-bold text-emerald-400 uppercase mb-1">AI Confidence</p>
+                          <p className="text-lg font-bold text-emerald-700">{alert.confidence.toFixed(1)}%</p>
+                        </div>
+                      )}
+                      {alert.threatLevel && (
+                        <div className={`p-3 rounded-xl border ${alert.threatLevel === 'High' ? 'bg-rose-50 border-rose-100' :
+                          alert.threatLevel === 'Medium' ? 'bg-amber-50 border-amber-100' :
+                            'bg-slate-50 border-slate-100'
+                          }`}>
+                          <p className={`text-[10px] font-bold uppercase mb-1 ${alert.threatLevel === 'High' ? 'text-rose-400' :
+                            alert.threatLevel === 'Medium' ? 'text-amber-400' :
+                              'text-slate-400'
+                            }`}>Threat Level</p>
+                          <p className={`text-lg font-bold ${alert.threatLevel === 'High' ? 'text-rose-700' :
+                            alert.threatLevel === 'Medium' ? 'text-amber-700' :
+                              'text-slate-700'
+                            }`}>{alert.threatLevel}</p>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="space-y-4">
                       {hasLocation && (
@@ -169,8 +206,8 @@ const AlertsView: React.FC<AlertsViewProps> = ({ data }) => {
                         <button
                           onClick={() => window.open(`https://www.openstreetmap.org/?mlat=${alert.latitude}&mlon=${alert.longitude}#map=16/${alert.latitude}/${alert.longitude}`, '_blank')}
                           className={`flex-1 py-3 rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 ${isActive
-                              ? `bg-${threatColor}-600 text-white hover:bg-${threatColor}-700`
-                              : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                            ? `bg-${threatColor}-600 text-white hover:bg-${threatColor}-700`
+                            : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                             }`}
                         >
                           <MapPin className="w-4 h-4" /> View on Map

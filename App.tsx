@@ -180,10 +180,25 @@ const App: React.FC = () => {
     let count = 0;
     const alerts = Object.values(dashboardData.alerts || {});
     alerts.forEach((alert: any) => {
-      if (alert.emotion && (alert.isEmergency || alert.status === 'ACTIVE')) count++;
-      else {
+      // Check if this is a top-level alert
+      if (alert.emotion) {
+        // Count as active if:
+        // 1. Explicitly marked as ACTIVE status, OR
+        // 2. Has isEmergency flag set to true, OR
+        // 3. No status field (treat as active by default unless resolved)
+        const isActive = alert.status === 'ACTIVE' ||
+          alert.isEmergency === true ||
+          (!alert.status && !alert.hasOwnProperty('isEmergency'));
+        if (isActive && alert.status !== 'RESOLVED') count++;
+      } else {
+        // This is a nested structure (user ID -> alerts)
         Object.values(alert).forEach((nested: any) => {
-          if (nested.emotion && (nested.isEmergency || nested.status === 'ACTIVE')) count++;
+          if (nested.emotion) {
+            const isActive = nested.status === 'ACTIVE' ||
+              nested.isEmergency === true ||
+              (!nested.status && !nested.hasOwnProperty('isEmergency'));
+            if (isActive && nested.status !== 'RESOLVED') count++;
+          }
         });
       }
     });
